@@ -1,36 +1,44 @@
-from PIL import Image as img
 import os
+from send2trash import send2trash as trash
+from PIL import Image as img
 
 path = 'files/'
-file_list = os.listdir(path)
-# total_files = sum(1 for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and f[0] != '.')  # Counting total files in the folder
-new_width, new_height = (540, 960)  # Dimensions to resize each image to
-base_image = img.new(mode='RGB', size=(1620, 960), color='white')  # Base image to paste resized images upon
-paste_x, paste_y = (0, 0)  # Starting co-ordinates for pasting
+screenshot_folder = path+'screenshots/'
 
-for i in range(1, 4):  # Merging 3 screenshots at a time
-    im = img.open(path + 'tomerge{}.png'.format(i))
-    width, height = im.size
-    # print('testpic{}.png dimensions = {}×{}'.format(i, width, height))
+new_width, new_height = (540, 960)  # Dimensions to resize each image to
+base_image = img.new(mode='RGB', size=(1620, 960))  # Base image to paste resized images upon, default color='black'
+paste_x, paste_y = (0, 0)  # Starting co-ordinates for pasting onto base image
+
+files = sorted(os.listdir(screenshot_folder))  # , reverse=True)  # sorted by name, uncomment if descending
+# print(files)
+
+for i in range(0, 3):  # Currently merging 3 files at a time
+    im = img.open(screenshot_folder+files[i])
     im_rs = im.resize((new_width, new_height), img.ANTIALIAS)
-    # print('testpic{}_rs.png dimensions = {}×{}'.format(i, im_rs.size[0], im_rs.size[1]))
     base_image.paste(im_rs, (paste_x, paste_y))
     paste_x += 540
 
 
-def save_file():
-    base_image.save(path + merged_filename)
+def save_file():  # Save to a level above 'screenshots' folder - into 'files'
+    base_image.save(path+merged_filename)
     print('Final image saved as: "{}"'.format(merged_filename))
+    # base_image.show()
+    if input('\nMove screenshot files to Trash? [Y/N]: ').lower() == 'y':
+        delete_files()
     exit(0)
 
 
-# base_image.show()
+def delete_files():  # Send screenshots to Trash/Recycle Bin after merge
+    for i in range(0, 3):
+        print('File "{}" successfully moved to Trash!'.format(files[i]))
+        trash(screenshot_folder+files[i])
 
-# Ask for filename and check if file already exists
+
+# Ask for filename, check if file already exists, and save
 while True:
-    merged_filename = input('Enter filename: ') + '.png'
-    if file_list.__contains__(merged_filename):
-        confirm = input('File already exists! Replace with this one? [Y/N]: ')
+    merged_filename = input('Enter new image filename: ') + '.png'
+    if os.listdir(path).__contains__(merged_filename):
+        confirm = input('File "{}" already exists! Replace with this one? [Y/N]: '.format(merged_filename))
         if confirm.lower() == 'y':
             save_file()
     else:
